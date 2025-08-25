@@ -26,7 +26,7 @@ Installation :
 No installation required! Just download the HTML file and open it in any modern web browser.
 Alternatively, you can clone this repository:
 bash
-git clone https://github.com/your-username/nimah-todo-app.git
+git clone https://github.com/your-username/Nimah_App.git
 
 Browser Support : 
 This app works on all modern browsers including:
