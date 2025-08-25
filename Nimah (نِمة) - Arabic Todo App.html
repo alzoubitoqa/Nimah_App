@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق قائمة المهام</title>
+    <style>
+        :root {
+            --primary-color: #4caf50;
+            --secondary-color: #f9f9f9;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .input-section {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        #task-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        
+        #add-btn {
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        #add-btn:hover {
+            background-color: #3d8b40;
+        }
+        
+        .filters {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        #task-list {
+            list-style-type: none;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeIn 0.5s;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .task-text {
+            flex: 1;
+            margin-left: 10px;
+        }
+        
+        .completed .task-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+        
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff5252;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+        }
+        
+        .stats {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .input-section {
+                flex-direction: column;
+            }
+            
+            #task-input, #add-btn {
+                width: 100%;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>قائمة مهامي</h1>
+            <p>أدخل المهام اليومية التي تريد إنجازها</p>
+        </header>
+        
+        <div class="input-section">
+            <input type="text" id="task-input" placeholder="أدخل مهمة جديدة...">
+            <button id="add-btn">إضافة</button>
+        </div>
+        
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">الكل</button>
+            <button class="filter-btn" data-filter="active">النشطة</button>
+            <button class="filter-btn" data-filter="completed">المكتملة</button>
+        </div>
+        
+        <ul id="task-list"></ul>
+        
+        <div class="stats">
+            <span id="tasks-count">0</span> مهمة متبقية
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskInput = document.getElementById('task-input');
+            const addButton = document.getElementById('add-btn');
+            const taskList = document.getElementById('task-list');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const tasksCount = document.getElementById('tasks-count');
+            
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            let currentFilter = 'all';
+            
+            // عرض المهام
+            function renderTasks() {
+                taskList.innerHTML = '';
+                
+                const filteredTasks = tasks.filter(task => {
+                    if (currentFilter === 'active') return !task.completed;
+                    if (currentFilter === 'completed') return task.completed;
+                    return true;
+                });
+                
+                filteredTasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    li.dataset.id = task.id;
+                    
+                    li.innerHTML = `
+                        <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                        <span class="task-text">${task.text}</span>
+                        <button class="delete-btn">×</button>
+                    `;
+                    
+                    taskList.appendChild(li);
+                });
+                
+                updateTasksCount();
+                saveTasksToLocalStorage();
+            }
+            
+            // إضافة مهمة جديدة
+            function addTask() {
+                const text = taskInput.value.trim();
+                if (text) {
+                    const newTask = {
+                        id: Date.now(),
+                        text: text,
+                        completed: false
+                    };
+                    
+                    tasks.push(newTask);
+                    taskInput.value = '';
+                    renderTasks();
+                }
+            }
+            
+            // تحديث عدد المهام غير المكتملة
+            function updateTasksCount() {
+                const count = tasks.filter(task => !task.completed).length;
+                tasksCount.textContent = count;
+            }
+            
+            // حفظ المهام في localStorage
+            function saveTasksToLocalStorage() {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+            
+            // التعامل مع الأحداث
+            addButton.addEventListener('click', addTask);
+            
+            taskInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+            
+            taskList.addEventListener('click', function(e) {
+                const taskItem = e.target.closest('.task-item');
+                if (!taskItem) return;
+                
+                const taskId = parseInt(taskItem.dataset.id);
+                const taskIndex = tasks.findIndex(task => task.id === taskId);
+                
+                if (e.target.type === 'checkbox') {
+                    // بالإكمال أو عدم الإكمال
+                    tasks[taskIndex].completed = e.target.checked;
+                    renderTasks();
+                } else if (e.target.classList.contains('delete-btn')) {
+                    // حذف المهمة
+                    tasks.splice(taskIndex, 1);
+                    renderTasks();
+                }
+            });
+            
+            // تطبيق الفلتر
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    renderTasks();
+                });
+            });
+            
+            // التهيئة الأولية
+            renderTasks();
+        });
+    </script>
+</body>
+</html>
